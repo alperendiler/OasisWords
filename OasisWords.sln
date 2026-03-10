@@ -1,0 +1,84 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11520.95 d18.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{A1B2C3D4-0001-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OasisWords.Core.Application", "src\Core\OasisWords.Core.Application\OasisWords.Core.Application.csproj", "{A1B2C3D4-0002-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OasisWords.Core.CrossCuttingConcerns", "src\Core\OasisWords.Core.CrossCuttingConcerns\OasisWords.Core.CrossCuttingConcerns.csproj", "{A1B2C3D4-0003-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OasisWords.Core.Mailing", "src\Core\OasisWords.Core.Mailing\OasisWords.Core.Mailing.csproj", "{A1B2C3D4-0004-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OasisWords.Core.Persistence", "src\Core\OasisWords.Core.Persistence\OasisWords.Core.Persistence.csproj", "{A1B2C3D4-0005-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OasisWords.Core.Security", "src\Core\OasisWords.Core.Security\OasisWords.Core.Security.csproj", "{A1B2C3D4-0006-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OasisWords.Domain", "src\OasisWords.Domain\OasisWords.Domain.csproj", "{A1B2C3D4-0007-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OasisWords.Application", "src\OasisWords.Application\OasisWords.Application.csproj", "{A1B2C3D4-0008-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OasisWords.Persistence", "src\OasisWords.Persistence\OasisWords.Persistence.csproj", "{A1B2C3D4-0009-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OasisWords.Infrastructure", "src\OasisWords.Infrastructure\OasisWords.Infrastructure.csproj", "{A1B2C3D4-0010-0000-0000-000000000000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OasisWords.WebAPI", "src\OasisWords.WebAPI\OasisWords.WebAPI.csproj", "{A1B2C3D4-0011-0000-0000-000000000000}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A1B2C3D4-0002-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0002-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0002-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0002-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0003-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0003-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0003-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0003-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0004-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0004-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0004-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0004-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0005-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0005-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0005-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0005-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0006-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0006-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0006-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0006-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0007-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0007-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0007-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0007-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0008-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0008-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0008-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0008-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0009-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0009-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0009-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0009-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0010-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0010-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0010-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0010-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-0011-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-0011-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-0011-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-0011-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A1B2C3D4-0002-0000-0000-000000000000} = {A1B2C3D4-0001-0000-0000-000000000000}
+		{A1B2C3D4-0003-0000-0000-000000000000} = {A1B2C3D4-0001-0000-0000-000000000000}
+		{A1B2C3D4-0004-0000-0000-000000000000} = {A1B2C3D4-0001-0000-0000-000000000000}
+		{A1B2C3D4-0005-0000-0000-000000000000} = {A1B2C3D4-0001-0000-0000-000000000000}
+		{A1B2C3D4-0006-0000-0000-000000000000} = {A1B2C3D4-0001-0000-0000-000000000000}
+	EndGlobalSection
+EndGlobal

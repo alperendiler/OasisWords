@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>OasisWords.WebAPI</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OasisWords.Application\OasisWords.Application.csproj" />
+    <ProjectReference Include="..\OasisWords.Persistence\OasisWords.Persistence.csproj" />
+    <ProjectReference Include="..\OasisWords.Infrastructure\OasisWords.Infrastructure.csproj" />
+    <ProjectReference Include="..\Core\OasisWords.Core.CrossCuttingConcerns\OasisWords.Core.CrossCuttingConcerns.csproj" />
+    <ProjectReference Include="..\Core\OasisWords.Core.Mailing\OasisWords.Core.Mailing.csproj" />
+    <ProjectReference Include="..\Core\OasisWords.Core.Security\OasisWords.Core.Security.csproj" />
+  </ItemGroup>
+
+</Project>
