@@ -2,15 +2,24 @@ using MediatR;
 using OasisWords.Application.Features.StudentProgress.DTOs;
 using OasisWords.Application.Services.StudentProgressService;
 using OasisWords.Application.Services.WordService;
+using OasisWords.Core.Application.Pipelines;
 using OasisWords.Core.CrossCuttingConcerns.Exceptions;
 using OasisWords.Domain.Entities;
 using OasisWords.Domain.Enums;
 
 namespace OasisWords.Application.Features.StudentProgress.Queries.GetDailyTargetWords;
 
-public class GetDailyTargetWordsQuery : IRequest<GetDailyTargetWordsResponse>
+public class GetDailyTargetWordsQuery : IRequest<GetDailyTargetWordsResponse>, ICachableRequest
 {
     public Guid StudentId { get; set; }
+
+    // ── ICachableRequest ──────────────────────────────────────────────────────
+    // Cache is keyed per student and per calendar day (UTC), so each student
+    // gets their own daily word list and the cache busts naturally at midnight.
+    public string CacheKey => $"DailyWords_{StudentId}_{DateTime.UtcNow:yyyyMMdd}";
+    public bool BypassCache => false;
+    public string? CacheGroupKey => $"StudentProgress_{StudentId}";
+    public TimeSpan? SlidingExpiration => TimeSpan.FromHours(6);
 }
 
 public class GetDailyTargetWordsResponse
@@ -50,7 +59,6 @@ public class GetDailyTargetWordsQueryHandler : IRequestHandler<GetDailyTargetWor
 
         DateTime today = DateTime.UtcNow.Date;
 
-        // Words due for review (NextReviewDate <= today, already in progress)
         var dueProgresses = await _progressRepository.GetListAsync(
             predicate: p => p.StudentId == request.StudentId
                          && p.Status != WordLearningStatus.Mastered
@@ -66,11 +74,6 @@ public class GetDailyTargetWordsQueryHandler : IRequestHandler<GetDailyTargetWor
         int reviewCount = dueProgresses.Items.Count;
         int newWordsNeeded = Math.Max(0, student.DailyWordGoal - reviewCount);
 
-        // Collect already-known WordMeaning IDs to exclude
-        var knownIds = new HashSet<Guid>(
-            dueProgresses.Items.Select(p => p.WordMeaningId));
-
-        // Existing progress IDs (mastered + in progress) to avoid re-surfacing
         var allProgressIds = await _progressRepository.GetListAsync(
             predicate: p => p.StudentId == request.StudentId,
             enableTracking: false,
@@ -78,8 +81,6 @@ public class GetDailyTargetWordsQueryHandler : IRequestHandler<GetDailyTargetWor
             cancellationToken: cancellationToken);
 
         var excludeIds = new HashSet<Guid>(allProgressIds.Items.Select(p => p.WordMeaningId));
-
-        // Pull new unseen words based on student's target language profile
         Guid? targetLanguageId = student.LanguageProfiles.FirstOrDefault()?.TargetLanguageId;
 
         var newMeanings = await _wordMeaningRepository.GetListAsync(
@@ -96,17 +97,11 @@ public class GetDailyTargetWordsQueryHandler : IRequestHandler<GetDailyTargetWor
 
         var result = new List<DailyTargetWordDto>();
 
-        // Map due-for-review words
         foreach (var progress in dueProgresses.Items)
-        {
             result.Add(MapToDto(progress.WordMeaning, progress.Status, isNew: false));
-        }
 
-        // Map new words
         foreach (var meaning in newMeanings.Items)
-        {
             result.Add(MapToDto(meaning, WordLearningStatus.New, isNew: true));
-        }
 
         return new GetDailyTargetWordsResponse
         {
@@ -117,9 +112,8 @@ public class GetDailyTargetWordsQueryHandler : IRequestHandler<GetDailyTargetWor
         };
     }
 
-    private static DailyTargetWordDto MapToDto(WordMeaning meaning, WordLearningStatus status, bool isNew)
-    {
-        return new DailyTargetWordDto
+    private static DailyTargetWordDto MapToDto(WordMeaning meaning, WordLearningStatus status, bool isNew) =>
+        new()
         {
             WordMeaningId = meaning.Id,
             WordText = meaning.Word.Text,
@@ -132,5 +126,4 @@ public class GetDailyTargetWordsQueryHandler : IRequestHandler<GetDailyTargetWor
             Status = status,
             IsNew = isNew
         };
-    }
 }

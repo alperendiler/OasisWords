@@ -33,12 +33,32 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
 public class OperationClaimConfiguration : IEntityTypeConfiguration<OperationClaim>
 {
+    // Stable Guids for seed roles
+    public static readonly Guid AdminRoleId  = Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA");
+    public static readonly Guid StudentRoleId = Guid.Parse("BBBBBBBB-BBBB-BBBB-BBBB-BBBBBBBBBBBB");
+
     public void Configure(EntityTypeBuilder<OperationClaim> builder)
     {
         builder.ToTable("OperationClaims");
         builder.HasKey(oc => oc.Id);
         builder.Property(oc => oc.Name).IsRequired().HasMaxLength(256);
         builder.HasIndex(oc => oc.Name).IsUnique();
+
+        // ── Seed Data ──────────────────────────────────────────────────────────
+        builder.HasData(
+            new OperationClaim
+            {
+                Id = AdminRoleId,
+                Name = "Admin",
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            },
+            new OperationClaim
+            {
+                Id = StudentRoleId,
+                Name = "Student",
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            }
+        );
     }
 }
 

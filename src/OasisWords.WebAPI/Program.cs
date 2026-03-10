@@ -1,4 +1,7 @@
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OasisWords.Application;
@@ -8,8 +11,10 @@ using OasisWords.Core.Mailing;
 using OasisWords.Core.Security.JWT;
 using OasisWords.Infrastructure;
 using OasisWords.Persistence;
+using OasisWords.WebAPI.Jobs;
 using Serilog;
 using System.Text;
+using System.Threading.RateLimiting;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -60,7 +65,8 @@ builder.Services
             ValidateIssuerSigningKey = true,
             ValidIssuer = tokenOptions.Issuer,
             ValidAudience = tokenOptions.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenOptions.SecurityKey)),
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(tokenOptions.SecurityKey)),
             ClockSkew = TimeSpan.Zero
         };
     });
@@ -77,20 +83,65 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         if (builder.Environment.IsDevelopment())
-        {
-            policy.AllowAnyOrigin()
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        }
+            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
         else
-        {
-            policy.WithOrigins(allowedOrigins)
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
-        }
+            policy.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
     });
 });
+
+// ── Rate Limiting ─────────────────────────────────────────────────────────────
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Global policy — generous limit for general API endpoints
+    options.AddFixedWindowLimiter("global", opt =>
+    {
+        opt.PermitLimit = 100;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 5;
+    });
+
+    // Strict AI policy — max 2 requests / second per user
+    // Protects the Gemini API quota from abuse
+    options.AddSlidingWindowLimiter("ai_strict", opt =>
+    {
+        opt.PermitLimit = 2;
+        opt.Window = TimeSpan.FromSeconds(1);
+        opt.SegmentsPerWindow = 2;
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 0; // No queueing — immediately 429
+    });
+
+    // Auth endpoints — prevent credential stuffing / brute force
+    options.AddFixedWindowLimiter("auth", opt =>
+    {
+        opt.PermitLimit = 10;
+        opt.Window = TimeSpan.FromMinutes(15);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 0;
+    });
+});
+
+// ── Hangfire ──────────────────────────────────────────────────────────────────
+string hangfireConnection = builder.Configuration.GetConnectionString("OasisWordsDB")
+    ?? throw new InvalidOperationException("OasisWordsDB connection string is required.");
+
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(hangfireConnection)));
+
+builder.Services.AddHangfireServer(opts =>
+{
+    opts.WorkerCount = 2; // lightweight — we only have one recurring job
+    opts.Queues = new[] { "default", "critical" };
+});
+
+// Register job class as scoped so EF DbContext is injected properly
+builder.Services.AddScoped<StreakResetJob>();
 
 // ── Controllers & API Explorer ────────────────────────────────────────────────
 builder.Services.AddControllers();
@@ -133,8 +184,10 @@ builder.Services.AddSwaggerGen(c =>
 WebApplication app = builder.Build();
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Exception Handling ────────────────────────────────────────────────────────
 app.UseMiddleware<ExceptionMiddleware>();
 
+// ── Swagger ───────────────────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -144,8 +197,27 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseSerilogRequestLogging();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// ── Hangfire Dashboard (dev only, admin-protected in production) ──────────────
+if (app.Environment.IsDevelopment())
+{
+    app.UseHangfireDashboard("/hangfire");
+}
+
 app.MapControllers();
+
+// ── Schedule Recurring Jobs ───────────────────────────────────────────────────
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    // Nightly at 00:05 UTC — gives midnight DB writes a 5-minute grace period
+    RecurringJob.AddOrUpdate<StreakResetJob>(
+        recurringJobId: "streak-reset-nightly",
+        methodCall: job => job.ExecuteAsync(CancellationToken.None),
+        cronExpression: "5 0 * * *",  // 00:05 UTC daily
+        timeZone: TimeZoneInfo.Utc);
+}
 
 app.Run();

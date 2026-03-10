@@ -20,13 +20,13 @@ public static class ClaimExtensions
 public static class ClaimsPrincipalExtensions
 {
     public static string? GetEmail(this ClaimsPrincipal claimsPrincipal)
-        => claimsPrincipal.FindFirst(ClaimTypes.Email)?.Value;
+        => claimsPrincipal.FindFirstValue(ClaimTypes.Email);
 
     public static string? GetId(this ClaimsPrincipal claimsPrincipal)
-        => claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        => claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
 
     public static Guid GetUserId(this ClaimsPrincipal claimsPrincipal)
-        => Guid.Parse(claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        => Guid.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     public static string[] GetRoles(this ClaimsPrincipal claimsPrincipal)
         => claimsPrincipal.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();

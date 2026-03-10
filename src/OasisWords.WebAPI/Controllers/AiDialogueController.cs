@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using OasisWords.Application.Features.AiDialogue.Commands.SendMessage;
 using OasisWords.Application.Features.AiDialogue.Commands.StartDialogueSession;
 using OasisWords.Application.Features.AiDialogue.DTOs;
@@ -8,12 +9,19 @@ using OasisWords.Core.Application.Requests;
 
 namespace OasisWords.WebAPI.Controllers;
 
+/// <summary>
+/// AI conversation endpoints.
+/// The entire controller is throttled to 2 req/s per the "ai_strict" policy
+/// to protect Gemini API quota from abuse.
+/// </summary>
 [Authorize]
+[EnableRateLimiting("ai_strict")]
 public class AiDialogueController : BaseController
 {
     [HttpPost("sessions")]
     [ProducesResponseType(typeof(StartDialogueSessionResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> StartSession(
         [FromBody] StartDialogueSessionCommand command,
         CancellationToken cancellationToken)
@@ -25,6 +33,7 @@ public class AiDialogueController : BaseController
     [HttpPost("sessions/{sessionId:guid}/messages")]
     [ProducesResponseType(typeof(SendMessageResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> SendMessage(
         Guid sessionId,
         [FromBody] SendMessageCommand command,
@@ -34,6 +43,8 @@ public class AiDialogueController : BaseController
         return Ok(await Mediator.Send(command, cancellationToken));
     }
 
+    // History reads don't hit Gemini — relax the rate limit for GET endpoints
+    [DisableRateLimiting]
     [HttpGet("sessions")]
     [ProducesResponseType(typeof(GetDialogueHistoryResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetHistory(
@@ -50,6 +61,7 @@ public class AiDialogueController : BaseController
         return Ok(await Mediator.Send(query, cancellationToken));
     }
 
+    [DisableRateLimiting]
     [HttpGet("sessions/{sessionId:guid}")]
     [ProducesResponseType(typeof(DialogueSessionDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

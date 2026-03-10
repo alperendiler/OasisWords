@@ -6,6 +6,10 @@ namespace OasisWords.Persistence.EntityConfigurations;
 
 public class LanguageConfiguration : IEntityTypeConfiguration<Language>
 {
+    // Stable Guids — must match SeederSettings and any documentation
+    public static readonly Guid EnglishId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    public static readonly Guid TurkishId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+
     public void Configure(EntityTypeBuilder<Language> builder)
     {
         builder.ToTable("Languages");
@@ -18,6 +22,26 @@ public class LanguageConfiguration : IEntityTypeConfiguration<Language>
                .WithOne(w => w.Language)
                .HasForeignKey(w => w.LanguageId)
                .OnDelete(DeleteBehavior.Restrict);
+
+        // ── Seed Data ──────────────────────────────────────────────────────────
+        builder.HasData(
+            new Language
+            {
+                Id = EnglishId,
+                Name = "English",
+                Code = "en",
+                FlagImageUrl = null,
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            },
+            new Language
+            {
+                Id = TurkishId,
+                Name = "Türkçe",
+                Code = "tr",
+                FlagImageUrl = null,
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            }
+        );
     }
 }
 
