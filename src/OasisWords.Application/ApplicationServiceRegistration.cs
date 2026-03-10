@@ -1,6 +1,10 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using OasisWords.Application.Features.Auth;
+using OasisWords.Application.Features.Auth.Rules;
+using OasisWords.Application.Features.Words.Rules;
+using OasisWords.Application.Services.AuthService;
 using OasisWords.Core.Application.Pipelines;
 using System.Reflection;
 
@@ -13,18 +17,23 @@ public static class ApplicationServiceRegistration
         services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
         services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
-        });
+            cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-        // Register pipeline behaviors in order
+        // Pipeline behaviors — order matters
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CacheRemovingBehavior<,>));
+
+        // Application services
+        services.AddScoped<IAuthService, AuthManager>();
+
+        // Business rules
+        services.AddScoped<AuthBusinessRules>();
+        services.AddScoped<WordBusinessRules>();
 
         return services;
     }

@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OasisWords.Application.Services.AiDialogueService;
+using OasisWords.Infrastructure.Adapters.Ai;
 
 namespace OasisWords.Infrastructure;
 
@@ -9,12 +11,14 @@ public static class InfrastructureServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Register HttpClients for external services
-        // services.AddHttpClient<OpenAiAdapter>();
+        GeminiSettings geminiSettings = configuration
+            .GetSection("GeminiSettings")
+            .Get<GeminiSettings>() ?? new GeminiSettings();
 
-        // Register external service adapters
-        // services.AddScoped<IAiService, OpenAiAdapter>();
-        // services.AddScoped<ITranslationService, DeepLAdapter>();
+        services.AddSingleton(geminiSettings);
+
+        services.AddHttpClient<GeminiAdapter>();
+        services.AddScoped<IAiService, GeminiAdapter>();
 
         return services;
     }

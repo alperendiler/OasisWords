@@ -5,7 +5,6 @@ using OasisWords.Core.Security.JWT;
 
 namespace OasisWords.Application.Features.Auth.Commands.Register;
 
-// ── Request ──────────────────────────────────────────────────────────────────
 public class RegisterCommand : IRequest<RegisterResponse>
 {
     public string FirstName { get; set; } = string.Empty;
@@ -14,14 +13,12 @@ public class RegisterCommand : IRequest<RegisterResponse>
     public string Password { get; set; } = string.Empty;
 }
 
-// ── Response ─────────────────────────────────────────────────────────────────
 public class RegisterResponse
 {
     public AccessToken AccessToken { get; set; } = null!;
-    public RefreshToken RefreshToken { get; set; } = null!;
+    public string RefreshToken { get; set; } = string.Empty;
 }
 
-// ── Handler ──────────────────────────────────────────────────────────────────
 public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterResponse>
 {
     private readonly IAuthService _authService;
@@ -45,7 +42,6 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterR
             CreatedAt = DateTime.UtcNow
         };
 
-        RegisterResponse response = await _authService.RegisterAsync(user, cancellationToken);
-        return response;
+        return await _authService.RegisterAsync(user, cancellationToken);
     }
 }

@@ -13,7 +13,7 @@ using System.Text;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// ── Serilog ──────────────────────────────────────────────────────────────────
+// ── Serilog ───────────────────────────────────────────────────────────────────
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -23,41 +23,29 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// ── Options ──────────────────────────────────────────────────────────────────
-TokenOptions tokenOptions = builder.Configuration
-    .GetSection("TokenOptions")
-    .Get<TokenOptions>()!;
-
-MailSettings mailSettings = builder.Configuration
-    .GetSection("MailSettings")
-    .Get<MailSettings>()!;
-
-CacheSettings cacheSettings = builder.Configuration
-    .GetSection("CacheSettings")
-    .Get<CacheSettings>() ?? new CacheSettings();
+// ── Options ───────────────────────────────────────────────────────────────────
+TokenOptions tokenOptions = builder.Configuration.GetSection("TokenOptions").Get<TokenOptions>()!;
+MailSettings mailSettings = builder.Configuration.GetSection("MailSettings").Get<MailSettings>()!;
+CacheSettings cacheSettings = builder.Configuration.GetSection("CacheSettings").Get<CacheSettings>() ?? new CacheSettings();
 
 // ── Layer Service Registrations ───────────────────────────────────────────────
 builder.Services.AddApplicationServices();
 builder.Services.AddPersistenceServices(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-// ── Core Services ────────────────────────────────────────────────────────────
+// ── Core Singletons ───────────────────────────────────────────────────────────
 builder.Services.AddSingleton(tokenOptions);
 builder.Services.AddSingleton(mailSettings);
 builder.Services.AddSingleton(cacheSettings);
 builder.Services.AddScoped<ITokenHelper, JwtHelper>();
 builder.Services.AddScoped<IMailService, MailKitMailService>();
 
-// ── Redis Distributed Cache ──────────────────────────────────────────────────
+// ── Distributed Cache (Redis → in-memory fallback) ────────────────────────────
 string? redisConnection = builder.Configuration.GetConnectionString("Redis");
 if (!string.IsNullOrEmpty(redisConnection))
-{
     builder.Services.AddStackExchangeRedisCache(opts => opts.Configuration = redisConnection);
-}
 else
-{
-    builder.Services.AddDistributedMemoryCache(); // Fallback for development
-}
+    builder.Services.AddDistributedMemoryCache();
 
 // ── JWT Authentication ────────────────────────────────────────────────────────
 builder.Services
@@ -72,20 +60,44 @@ builder.Services
             ValidateIssuerSigningKey = true,
             ValidIssuer = tokenOptions.Issuer,
             ValidAudience = tokenOptions.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(tokenOptions.SecurityKey)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenOptions.SecurityKey)),
             ClockSkew = TimeSpan.Zero
         };
     });
 
 builder.Services.AddAuthorization();
 
-// ── Controllers ───────────────────────────────────────────────────────────────
+// ── CORS ──────────────────────────────────────────────────────────────────────
+string[] allowedOrigins = builder.Configuration
+    .GetSection("AllowedOrigins")
+    .Get<string[]>() ?? Array.Empty<string>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        }
+        else
+        {
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        }
+    });
+});
+
+// ── Controllers & API Explorer ────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 
-// ── Swagger ───────────────────────────────────────────────────────────────────
+// ── Swagger with Bearer support ───────────────────────────────────────────────
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -102,7 +114,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter 'Bearer {token}'"
+        Description = "Enter: Bearer {your JWT token}"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -121,10 +133,8 @@ builder.Services.AddSwaggerGen(c =>
 WebApplication app = builder.Build();
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── Exception Handling Middleware ─────────────────────────────────────────────
 app.UseMiddleware<ExceptionMiddleware>();
 
-// ── Swagger UI ────────────────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -132,6 +142,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
 app.UseSerilogRequestLogging();
 app.UseAuthentication();
 app.UseAuthorization();
