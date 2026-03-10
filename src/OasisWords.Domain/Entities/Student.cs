@@ -1,4 +1,5 @@
 using OasisWords.Core.Persistence.Repositories;
+using OasisWords.Domain.Enums;
 
 namespace OasisWords.Domain.Entities;
 
@@ -16,7 +17,7 @@ public class StudentLanguageProfile : Entity<Guid>
     public Guid StudentId { get; set; }
     public Guid NativeLanguageId { get; set; }
     public Guid TargetLanguageId { get; set; }
-    public string TargetCefrLevel { get; set; } = string.Empty;
+    public CefrLevel TargetCefrLevel { get; set; }
 
     public virtual Student Student { get; set; } = null!;
     public virtual Language NativeLanguage { get; set; } = null!;

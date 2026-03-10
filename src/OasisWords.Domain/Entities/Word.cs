@@ -1,4 +1,5 @@
 using OasisWords.Core.Persistence.Repositories;
+using OasisWords.Domain.Enums;
 
 namespace OasisWords.Domain.Entities;
 
@@ -17,7 +18,7 @@ public class WordMeaning : Entity<Guid>
 {
     public Guid WordId { get; set; }
     public Guid TranslationLanguageId { get; set; }
-    public string CefrLevel { get; set; } = string.Empty;
+    public CefrLevel CefrLevel { get; set; }
     public string TranslationText { get; set; } = string.Empty;
     public string? ExampleSentence { get; set; }
     public string? ExampleTranslation { get; set; }

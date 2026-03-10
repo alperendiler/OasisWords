@@ -44,10 +44,11 @@ public class WordMeaningConfiguration : IEntityTypeConfiguration<WordMeaning>
     {
         builder.ToTable("WordMeanings");
         builder.HasKey(m => m.Id);
-        builder.Property(m => m.CefrLevel).IsRequired().HasMaxLength(5);
+        builder.Property(m => m.CefrLevel).IsRequired();
         builder.Property(m => m.TranslationText).IsRequired().HasMaxLength(500);
         builder.Property(m => m.ExampleSentence).HasMaxLength(1000);
         builder.Property(m => m.ExampleTranslation).HasMaxLength(1000);
+        builder.HasIndex(m => new { m.TranslationLanguageId, m.CefrLevel });
         builder.HasOne(m => m.TranslationLanguage)
                .WithMany()
                .HasForeignKey(m => m.TranslationLanguageId)
@@ -79,7 +80,7 @@ public class StudentLanguageProfileConfiguration : IEntityTypeConfiguration<Stud
     {
         builder.ToTable("StudentLanguageProfiles");
         builder.HasKey(p => p.Id);
-        builder.Property(p => p.TargetCefrLevel).IsRequired().HasMaxLength(5);
+        builder.Property(p => p.TargetCefrLevel).IsRequired();
         builder.HasIndex(p => new { p.StudentId, p.NativeLanguageId, p.TargetLanguageId }).IsUnique();
         builder.HasOne(p => p.NativeLanguage)
                .WithMany()
@@ -100,6 +101,9 @@ public class StudentWordProgressConfiguration : IEntityTypeConfiguration<Student
         builder.HasKey(p => p.Id);
         builder.HasIndex(p => new { p.StudentId, p.WordMeaningId }).IsUnique();
         builder.Property(p => p.Status).IsRequired();
+        builder.Property(p => p.NextReviewDate).IsRequired();
+        builder.Property(p => p.ConsecutiveCorrectAnswers).HasDefaultValue(0);
+        builder.Property(p => p.TotalIncorrectAnswers).HasDefaultValue(0);
         builder.HasOne(p => p.Student)
                .WithMany()
                .HasForeignKey(p => p.StudentId)
@@ -117,6 +121,9 @@ public class StudentStreakConfiguration : IEntityTypeConfiguration<StudentStreak
     {
         builder.ToTable("StudentStreaks");
         builder.HasKey(s => s.Id);
+        builder.Property(s => s.CurrentStreak).IsRequired().HasDefaultValue(0);
+        builder.Property(s => s.LongestStreak).IsRequired().HasDefaultValue(0);
+        builder.Property(s => s.LastActivityDate).IsRequired();
     }
 }
 
