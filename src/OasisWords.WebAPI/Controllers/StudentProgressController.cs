@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using OasisWords.Application.Features.StudentProgress.Commands.UpdateStudentStreak;
 using OasisWords.Application.Features.StudentProgress.Commands.UpdateWordProgress;
 using OasisWords.Application.Features.StudentProgress.Queries.GetDailyTargetWords;
@@ -8,6 +9,7 @@ using OasisWords.Core.Security.Extensions;
 namespace OasisWords.WebAPI.Controllers;
 
 [Authorize]
+[EnableRateLimiting("global")]
 public class StudentProgressController : BaseController
 {
     [HttpGet("daily-targets")]

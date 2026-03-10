@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using OasisWords.Application.Features.Words.Commands.CreateWord;
 using OasisWords.Application.Features.Words.Commands.CreateWordMeaning;
 using OasisWords.Application.Features.Words.Queries.GetByCefrLevelWord;
@@ -10,6 +11,7 @@ using OasisWords.Domain.Enums;
 namespace OasisWords.WebAPI.Controllers;
 
 [Authorize]
+[EnableRateLimiting("global")]
 public class WordsController : BaseController
 {
     [HttpGet]

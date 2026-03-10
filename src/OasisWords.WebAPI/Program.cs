@@ -201,11 +201,22 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ── Hangfire Dashboard (dev only, admin-protected in production) ──────────────
-if (app.Environment.IsDevelopment())
+// ── Hangfire Dashboard ────────────────────────────────────────────────────────
+// Development  : dashboard open to all local requests (no token needed in browser)
+// Production   : every request must carry a valid JWT with the "Admin" role
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    app.UseHangfireDashboard("/hangfire");
-}
+    Authorization = app.Environment.IsDevelopment()
+        // Allow all in dev — simplifies local debugging
+        ? new[] { new Hangfire.Dashboard.LocalRequestsOnlyAuthorizationFilter() }
+        // Admin-JWT guard in all other environments
+        : new Hangfire.Dashboard.IDashboardAuthorizationFilter[]
+          { new OasisWords.WebAPI.Filters.HangfireAuthorizationFilter() },
+
+    // Prevent the dashboard from being indexed by search engines
+    AppPath = "/swagger",    // "Back to site" link points to Swagger UI
+    DisplayStorageConnectionString = false
+});
 
 app.MapControllers();
 
