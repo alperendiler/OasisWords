@@ -1,6 +1,9 @@
+using Microsoft.EntityFrameworkCore;
+using OasisWords.Application.Features.Auth;
 using OasisWords.Application.Features.Auth.Commands.Login;
 using OasisWords.Application.Features.Auth.Commands.Register;
 using OasisWords.Application.Features.Auth.Rules;
+using OasisWords.Application.Services.StudentProgressService;
 using OasisWords.Core.Security.Entities;
 using OasisWords.Core.Security.Hashing;
 using OasisWords.Core.Security.JWT;
@@ -10,6 +13,7 @@ namespace OasisWords.Application.Services.AuthService;
 public class AuthManager : IAuthService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IStudentRepository _studentRepository; 
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IUserOperationClaimRepository _userOperationClaimRepository;
     private readonly ITokenHelper _tokenHelper;
@@ -17,34 +21,21 @@ public class AuthManager : IAuthService
 
     public AuthManager(
         IUserRepository userRepository,
+        IStudentRepository studentRepository,
         IRefreshTokenRepository refreshTokenRepository,
         IUserOperationClaimRepository userOperationClaimRepository,
         ITokenHelper tokenHelper,
         AuthBusinessRules authBusinessRules)
     {
         _userRepository = userRepository;
+        _studentRepository = studentRepository;
         _refreshTokenRepository = refreshTokenRepository;
         _userOperationClaimRepository = userOperationClaimRepository;
         _tokenHelper = tokenHelper;
         _authBusinessRules = authBusinessRules;
     }
 
-    public async Task<RegisterResponse> RegisterAsync(User user, CancellationToken cancellationToken = default)
-    {
-        await _authBusinessRules.EmailCannotBeDuplicatedWhenRegistered(user.Email, cancellationToken);
-
-        User createdUser = await _userRepository.AddAsync(user, cancellationToken);
-
-        AccessToken accessToken = await CreateAccessTokenAsync(createdUser, cancellationToken);
-        RefreshToken refreshToken = _tokenHelper.CreateRefreshToken(createdUser, string.Empty);
-        await _refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
-
-        return new RegisterResponse
-        {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken
-        };
-    }
+   
 
     public async Task<LoginResponse> LoginAsync(
         string email,
@@ -157,4 +148,6 @@ public class AuthManager : IAuthService
 
         return userClaims.Items.Select(uoc => uoc.OperationClaim).ToList();
     }
+
+   
 }

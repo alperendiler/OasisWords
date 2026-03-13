@@ -7,8 +7,7 @@ namespace OasisWords.Application.Features.Auth;
 
 public interface IAuthService
 {
-    Task<RegisterResponse> RegisterAsync(User user, CancellationToken cancellationToken = default);
-    Task<LoginResponse> LoginAsync(string email, string password, string ipAddress, CancellationToken cancellationToken = default);
+
     Task<AccessToken> CreateAccessTokenAsync(User user, CancellationToken cancellationToken = default);
     Task<RefreshToken> AddRefreshTokenAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default);
     Task<RefreshToken> UseRefreshTokenAsync(string token, string ipAddress, CancellationToken cancellationToken = default);

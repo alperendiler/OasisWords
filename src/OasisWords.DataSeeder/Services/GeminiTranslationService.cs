@@ -33,34 +33,34 @@ public class GeminiTranslationService
     /// Instructs the model to return ONLY a JSON array — no markdown fences.
     /// </summary>
     public async Task<List<GeminiTranslation>> TranslateBatchAsync(
-        IEnumerable<OxfordWordRecord> words,
+        IEnumerable<EnglishCefrWord> words,
         CancellationToken ct = default)
     {
         string wordList = string.Join("\n", words.Select(w => $"- {w.Word} ({w.Cefr})"));
 
-        string prompt = $"""
-            You are an English-Turkish dictionary AI. For each English word below, provide:
-            1. A contextual Turkish translation (not a raw dictionary entry — choose the most common meaning)
-            2. A natural English example sentence
-            3. The Turkish translation of that example sentence
+        string prompt = $$"""
+You are an English-Turkish dictionary AI. For each English word below, provide:
+1. A contextual Turkish translation (not a raw dictionary entry — choose the most common meaning)
+2. A natural English example sentence
+3. The Turkish translation of that example sentence
 
-            Return ONLY a valid JSON array with no markdown fences, no extra text.
-            Each element must have these exact keys: word, cefr, translationTr, exampleSentence, exampleTranslation
+Return ONLY a valid JSON array with no markdown fences, no extra text.
+Each element must have these exact keys: word, cefr, translationTr, exampleSentence, exampleTranslation
 
-            Words to translate:
-            {wordList}
+Words to translate:
+{{wordList}} 
 
-            Example output format:
-            [
-              {{
-                "word": "abandon",
-                "cefr": "b2",
-                "translationTr": "terk etmek",
-                "exampleSentence": "She had to abandon her car in the snow.",
-                "exampleTranslation": "Arabayı karda bırakmak zorunda kaldı."
-              }}
-            ]
-            """;
+Example output format:
+[
+  {
+    "word": "abandon",
+    "cefr": "b2",
+    "translationTr": "terk etmek",
+    "exampleSentence": "She had to abandon her car in the snow.",
+    "exampleTranslation": "Arabayı karda bırakmak zorunda kaldı."
+  }
+]
+""";
 
         var requestBody = new
         {
@@ -81,37 +81,62 @@ public class GeminiTranslationService
 
         string url = $"{_settings.GeminiBaseUrl}/models/{_settings.GeminiModel}:generateContent?key={_settings.GeminiApiKey}";
         string json = JsonSerializer.Serialize(requestBody, JsonOpts);
+        int maxRetries = 3;
+        int delayMs = 10000; // İlk hata alındığında 10 saniye bekle
 
-        HttpResponseMessage response = await _http.PostAsync(
-            url,
-            new StringContent(json, Encoding.UTF8, "application/json"),
-            ct);
-
-        response.EnsureSuccessStatusCode();
-
-        using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
-        string rawText = doc.RootElement
-            .GetProperty("candidates")[0]
-            .GetProperty("content")
-            .GetProperty("parts")[0]
-            .GetProperty("text")
-            .GetString() ?? "[]";
-
-        // Strip any accidental markdown fences
-        rawText = rawText
-            .Replace("```json", "")
-            .Replace("```", "")
-            .Trim();
-
-        try
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
-            return JsonSerializer.Deserialize<List<GeminiTranslation>>(rawText, JsonOpts)
-                   ?? new List<GeminiTranslation>();
+            HttpResponseMessage response = await _http.PostAsync(
+                url,
+                new StringContent(json, Encoding.UTF8, "application/json"),
+                ct);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Başarılıysa json'ı parse et ve metottan çık
+                using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
+                string rawText = doc.RootElement
+                    .GetProperty("candidates")[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text")
+                    .GetString() ?? "[]";
+
+                rawText = rawText.Replace("```json", "").Replace("```", "").Trim();
+
+                try
+                {
+                    return JsonSerializer.Deserialize<List<GeminiTranslation>>(rawText, JsonOpts) ?? new();
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning("Failed to parse Gemini response: {Error}", ex.Message);
+                    return new();
+                }
+            }
+
+            // Başarısızsa hatayı oku
+            string errorContent = await response.Content.ReadAsStringAsync(ct);
+
+            // Eğer Sunucu Yoğunsa (503) veya Çok İstek Attıysak (429)
+            if (response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable ||
+                response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                _logger.LogWarning("Gemini API Meşgul! (Deneme {Attempt}/{MaxRetries}). {Wait} saniye bekleniyor...", attempt, maxRetries, delayMs / 1000);
+
+                if (attempt == maxRetries) break; // Son denemeydi, pes et
+
+                await Task.Delay(delayMs, ct);
+                delayMs *= 2; // Bir sonraki denemede bekleme süresini ikiye katla (10s -> 20s)
+                continue; // Döngünün başına dön ve tekrar istek at
+            }
+
+            // Başka bir kalıcı hataysa (örn: API Key yanlış vs.) direkt programı uyar
+            _logger.LogCritical("\n=== GEMINI API REDDETTİ ===\nHTTP: {Status}\nDetay: {Error}\n===========================\n", response.StatusCode, errorContent);
+            return new();
         }
-        catch (JsonException ex)
-        {
-            _logger.LogWarning("Failed to parse Gemini response: {Error}\nRaw: {Raw}", ex.Message, rawText);
-            return new List<GeminiTranslation>();
-        }
+
+        _logger.LogError("Gemini API'ye {Max} kez bağlanılamadı, bu parti atlanıyor.", maxRetries);
+        return new();
     }
 }

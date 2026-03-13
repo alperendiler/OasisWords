@@ -19,8 +19,11 @@ IHost host = Host.CreateDefaultBuilder(args)
 
         services.AddSingleton(settings);
         services.AddHttpClient<GeminiTranslationService>();
-        services.AddHttpClient<OasisWordsApiClient>();
-        services.AddHostedService<SeederWorker>();
+        services.AddHttpClient<OasisWordsApiClient>()
+                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    }); services.AddHostedService<SeederWorker>();
     })
     .Build();
 

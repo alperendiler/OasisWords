@@ -7,19 +7,19 @@ namespace OasisWords.DataSeeder.Models;
 /// Expected columns: Word, PartOfSpeech, CefrLevel
 /// Example CSV header: word,pos,cefr
 /// </summary>
-public class OxfordWordRecord
+public class EnglishCefrWord 
 {
     [Name("word")]
     public string Word { get; set; } = string.Empty;
 
+    // Eðer CSV'nde bu kolon yoksa [Optional] eklemelisin ki program çökmesin
     [Name("pos")]
-    public string PartOfSpeech { get; set; } = string.Empty;
+    [Optional]
+    public string? PartOfSpeech { get; set; }
 
-    /// <summary>Raw CEFR string from CSV: "a1", "a2", "b1", "b2", "c1", "c2"</summary>
-    [Name("cefr")]
+    [Name("CEFR")] // CSV'deki büyük harfli yazýma tam uyum
     public string Cefr { get; set; } = string.Empty;
 }
-
 public class SeederSettings
 {
     public string ApiBaseUrl { get; set; } = "http://localhost:5000";
@@ -28,7 +28,7 @@ public class SeederSettings
     public string GeminiApiKey { get; set; } = string.Empty;
     public string GeminiModel { get; set; } = "gemini-1.5-flash";
     public string GeminiBaseUrl { get; set; } = "https://generativelanguage.googleapis.com/v1beta";
-    public string CsvFilePath { get; set; } = "Data/oxford_words.csv";
+    public string CsvFilePath { get; set; } = "Data/ENGLISH_CERF_WORDS.csv";
 
     /// <summary>Guid of the English language row (must match seed data)</summary>
     public Guid EnglishLanguageId { get; set; } = Guid.Parse("11111111-1111-1111-1111-111111111111");

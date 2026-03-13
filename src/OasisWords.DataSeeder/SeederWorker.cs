@@ -20,6 +20,8 @@ public class SeederWorker : BackgroundService
     private readonly GeminiTranslationService _geminiService;
     private readonly OasisWordsApiClient _apiClient;
     private readonly IHostApplicationLifetime _lifetime;
+    // YENİ EKLENEN: Kaç kelime işlediğimizi kaydedeceğimiz ufak bir text dosyası
+    private readonly string _checkpointFile = "Data/seeder_checkpoint.txt";
 
     // CEFR string → int mapping (matches CefrLevel enum in Domain)
     private static readonly Dictionary<string, int> CefrMap = new(StringComparer.OrdinalIgnoreCase)
@@ -47,24 +49,48 @@ public class SeederWorker : BackgroundService
         try
         {
             _logger.LogInformation("OasisWords DataSeeder starting…");
-
+            _logger.LogInformation("Waiting 3 seconds for Web API to boot up...");
+            await Task.Delay(3000, stoppingToken);
             // Step 1 — Authenticate
             await _apiClient.AuthenticateAsync(stoppingToken);
 
             // Step 2 — Read CSV
-            List<OxfordWordRecord> allWords = ReadCsv(_settings.CsvFilePath);
+            List<EnglishCefrWord> allWords = ReadCsv(_settings.CsvFilePath);
             _logger.LogInformation("Loaded {Count} words from CSV.", allWords.Count);
 
+            int startIndex = 0;
+            if (File.Exists(_checkpointFile))
+            {
+                string savedIndex = File.ReadAllText(_checkpointFile);
+                if (int.TryParse(savedIndex, out int parsedIndex))
+                {
+                    startIndex = parsedIndex;
+                    _logger.LogInformation(">>> CHECKPOINT BULUNDU: İşleme {StartIndex}. kelimeden devam edilecek. <<<", startIndex);
+                }
+            }
+
+            // Eğer startIndex varsa, allWords listesindeki ilk N kelimeyi (zaten işlenenleri) listeden at
+            if (startIndex > 0)
+            {
+                allWords = allWords.Skip(startIndex).ToList();
+            }
             // Step 3 — Process in batches
             int processed = 0;
             int skipped = 0;
             int failed = 0;
 
-            foreach (IEnumerable<OxfordWordRecord> batch in allWords.Chunk(_settings.BatchSize))
+            foreach (IEnumerable<EnglishCefrWord> batch in allWords.Chunk(_settings.BatchSize))
             {
                 stoppingToken.ThrowIfCancellationRequested();
 
-                List<OxfordWordRecord> batchList = batch.ToList();
+                List<EnglishCefrWord> batchList = batch.ToList();
+                processed += batchList.Count;
+                File.WriteAllText(_checkpointFile, processed.ToString()); // Her 10 kelimede bir sayıyı dosyaya yazar
+
+                // Rate-limit safety delay
+                if (_settings.DelayBetweenBatchesMs > 0)
+                    await Task.Delay(_settings.DelayBetweenBatchesMs, stoppingToken);
+
                 _logger.LogInformation(
                     "Processing batch {From}–{To} of {Total}…",
                     processed + 1, processed + batchList.Count, allWords.Count);
@@ -83,10 +109,11 @@ public class SeederWorker : BackgroundService
 
                 // Build a lookup by word text (case-insensitive)
                 Dictionary<string, GeminiTranslation> translationLookup = translations
-                    .ToDictionary(t => t.Word, StringComparer.OrdinalIgnoreCase);
+                      .DistinctBy(t => t.Word, StringComparer.OrdinalIgnoreCase)
+                      .ToDictionary(t => t.Word, StringComparer.OrdinalIgnoreCase);
 
                 // Step 3b — Push each word to API
-                foreach (OxfordWordRecord record in batchList)
+                foreach (EnglishCefrWord record in batchList)
                 {
                     try
                     {
@@ -152,6 +179,8 @@ public class SeederWorker : BackgroundService
         catch (Exception ex)
         {
             _logger.LogCritical(ex, "Seeder encountered a fatal error.");
+            Console.WriteLine("Hata alındı! Ekranın kapanmaması için Enter'a basana kadar bekleyecek...");
+            Console.ReadLine(); // EKRANI DONDUR
             Environment.ExitCode = 1;
         }
         finally
@@ -160,7 +189,7 @@ public class SeederWorker : BackgroundService
         }
     }
 
-    private static List<OxfordWordRecord> ReadCsv(string path)
+    private static List<EnglishCefrWord> ReadCsv(string path)
     {
         if (!File.Exists(path))
             throw new FileNotFoundException($"CSV file not found: {path}");
@@ -173,6 +202,6 @@ public class SeederWorker : BackgroundService
             MissingFieldFound = null
         });
 
-        return csv.GetRecords<OxfordWordRecord>().ToList();
+        return csv.GetRecords<EnglishCefrWord>().ToList();
     }
 }

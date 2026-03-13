@@ -6,6 +6,7 @@ using OasisWords.Application.Services.WordService;
 using OasisWords.Core.CrossCuttingConcerns.Exceptions;
 using OasisWords.Domain.Entities;
 using OasisWords.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace OasisWords.Application.Features.AiDialogue.Commands.StartDialogueSession;
 

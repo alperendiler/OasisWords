@@ -1,3 +1,4 @@
+using OasisWords.Application.Services.AuthService;
 using OasisWords.Core.CrossCuttingConcerns.Exceptions;
 using OasisWords.Core.Persistence.Repositories;
 using OasisWords.Core.Security.Entities;
@@ -6,9 +7,9 @@ namespace OasisWords.Application.Features.Auth.Rules;
 
 public class AuthBusinessRules
 {
-    private readonly IAsyncRepository<User, Guid> _userRepository;
+    private readonly IUserRepository _userRepository;
 
-    public AuthBusinessRules(IAsyncRepository<User, Guid> userRepository)
+    public AuthBusinessRules(IUserRepository userRepository)
     {
         _userRepository = userRepository;
     }

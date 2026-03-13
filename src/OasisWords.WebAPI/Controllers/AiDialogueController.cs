@@ -44,7 +44,7 @@ public class AiDialogueController : BaseController
     }
 
     // History reads don't hit Gemini — relax the rate limit for GET endpoints
-    [DisableRateLimiting]
+    [EnableRateLimiting("global")]
     [HttpGet("sessions")]
     [ProducesResponseType(typeof(GetDialogueHistoryResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetHistory(
@@ -61,7 +61,7 @@ public class AiDialogueController : BaseController
         return Ok(await Mediator.Send(query, cancellationToken));
     }
 
-    [DisableRateLimiting]
+    [EnableRateLimiting("global")]
     [HttpGet("sessions/{sessionId:guid}")]
     [ProducesResponseType(typeof(DialogueSessionDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

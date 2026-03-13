@@ -1,16 +1,17 @@
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore.Query;
 using Moq;
 using OasisWords.Application.Features.Auth;
 using OasisWords.Application.Features.Auth.Commands.Login;
 using OasisWords.Application.Features.Auth.Commands.Register;
 using OasisWords.Application.Features.Auth.Rules;
 using OasisWords.Application.Services.AuthService;
+using OasisWords.Core.CrossCuttingConcerns.Exceptions;
+using OasisWords.Core.Persistence.Paging;
 using OasisWords.Core.Security.Entities;
 using OasisWords.Core.Security.Hashing;
 using OasisWords.Core.Security.JWT;
 using System.Linq.Expressions;
-using OasisWords.Core.Persistence.Paging;
-using OasisWords.Core.CrossCuttingConcerns.Exceptions;
 using Xunit;
 
 namespace OasisWords.Application.Tests.Auth;
@@ -248,17 +249,14 @@ public class AuthManagerTests
             }).ToList(),
             Index = 0, Size = 10, Count = claims.Length, Pages = 1
         };
-
         _claimRepoMock
             .Setup(r => r.GetListAsync(
-                It.IsAny<Expression<Func<UserOperationClaim, bool>>>(),
-                It.IsAny<Func<IQueryable<UserOperationClaim>,
-                    Microsoft.EntityFrameworkCore.Query.IIncludableQueryable<UserOperationClaim, object>>?>(),
-                It.IsAny<Func<IQueryable<UserOperationClaim>,
-                    IOrderedQueryable<UserOperationClaim>>?>(),
-                It.IsAny<int>(),
-                It.IsAny<int>(),
-                It.IsAny<bool>(),
+                It.IsAny<Expression<Func<UserOperationClaim, bool>>>(), // predicate
+                It.IsAny<Func<IQueryable<UserOperationClaim>, IOrderedQueryable<UserOperationClaim>>>(), // orderBy
+                It.IsAny<Func<IQueryable<UserOperationClaim>, IIncludableQueryable<UserOperationClaim, object>>>(), // include
+                It.IsAny<int>(), // index
+                It.IsAny<int>(), // size
+                It.IsAny<bool>(), // enableTracking
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(paginate);
     }

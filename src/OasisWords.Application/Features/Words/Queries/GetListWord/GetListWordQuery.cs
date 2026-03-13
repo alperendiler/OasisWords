@@ -6,6 +6,7 @@ using OasisWords.Core.Application.Pipelines;
 using OasisWords.Core.Application.Requests;
 using OasisWords.Core.Persistence.Paging;
 using OasisWords.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace OasisWords.Application.Features.Words.Queries.GetListWord;
 

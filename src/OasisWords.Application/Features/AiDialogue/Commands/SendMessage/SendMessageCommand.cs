@@ -4,6 +4,7 @@ using OasisWords.Application.Services.AiDialogueService;
 using OasisWords.Core.CrossCuttingConcerns.Exceptions;
 using OasisWords.Domain.Entities;
 using OasisWords.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace OasisWords.Application.Features.AiDialogue.Commands.SendMessage;
 

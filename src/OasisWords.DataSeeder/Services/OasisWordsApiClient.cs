@@ -36,28 +36,47 @@ public class OasisWordsApiClient
 
     public async Task AuthenticateAsync(CancellationToken ct = default)
     {
-        var req = new LoginRequest
+        try
         {
-            Email = _settings.AdminEmail,
-            Password = _settings.AdminPassword
-        };
+            var req = new LoginRequest
+            {
+                Email = _settings.AdminEmail,
+                Password = _settings.AdminPassword
+            };
 
-        HttpResponseMessage response = await _http.PostAsJsonAsync("api/auth/login", req, ct);
-        response.EnsureSuccessStatusCode();
+            HttpResponseMessage response = await _http.PostAsJsonAsync("api/auth/login", req, ct);
 
-        LoginResponse? login = await response.Content.ReadFromJsonAsync<LoginResponse>(JsonOpts, ct);
-        _token = login?.AccessToken?.Token
-            ?? throw new InvalidOperationException("Login returned no access token.");
+            if (!response.IsSuccessStatusCode)
+            {
+                string error = await response.Content.ReadAsStringAsync(ct);
+                _logger.LogError("\n=== API GİRİŞ HATASI ===");
+                _logger.LogError("Status: {StatusCode}", response.StatusCode);
+                _logger.LogError("Detay: {Error}", error);
+                _logger.LogError("========================\n");
+            }
 
-        _http.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", _token);
+            response.EnsureSuccessStatusCode();
 
-        _logger.LogInformation("Authenticated with OasisWords API as admin.");
+            LoginResponse? login = await response.Content.ReadFromJsonAsync<LoginResponse>(JsonOpts, ct);
+            _token = login?.AccessToken?.Token
+                ?? throw new InvalidOperationException("Login returned no access token.");
+
+            _http.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", _token);
+
+            _logger.LogInformation("Authenticated with OasisWords API as admin.");
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "\n!!! WEB API'YE BAĞLANILAMADI !!! Web API projesinin ({Url}) çalıştığından emin misin?", _settings.ApiBaseUrl);
+            throw;
+        }
     }
-
     /// <summary>Creates a word; returns null if it already exists (409 Conflict).</summary>
     public async Task<Guid?> CreateWordAsync(string text, Guid languageId, CancellationToken ct = default)
     {
+        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
+
         var req = new CreateWordRequest { LanguageId = languageId, Text = text };
 
         HttpResponseMessage response = await _http.PostAsJsonAsync("api/words", req, ct);
@@ -76,6 +95,7 @@ public class OasisWordsApiClient
     }
 
     public async Task CreateWordMeaningAsync(
+
         Guid wordId,
         Guid translationLanguageId,
         int cefrLevel,
@@ -84,6 +104,7 @@ public class OasisWordsApiClient
         string? exampleTranslation,
         CancellationToken ct = default)
     {
+        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
         var req = new CreateWordMeaningRequest
         {
             WordId = wordId,
