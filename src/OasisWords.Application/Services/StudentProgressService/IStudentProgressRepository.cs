@@ -3,7 +3,11 @@ using OasisWords.Domain.Entities;
 
 namespace OasisWords.Application.Services.StudentProgressService;
 
-public interface IStudentRepository : IAsyncRepository<Student, Guid>, IRepository<Student, Guid> { }
+public interface IStudentRepository : IAsyncRepository<Student, Guid>, IRepository<Student, Guid>
+{
+    /// <summary>Öğrenci dil profilini ekler (1:N — öğrenci başına birden fazla dil çifti desteklenecek).</summary>
+    Task<StudentLanguageProfile> AddLanguageProfileAsync(StudentLanguageProfile profile, CancellationToken ct = default);
+}
 
 public interface IStudentWordProgressRepository : IAsyncRepository<StudentWordProgress, Guid>, IRepository<StudentWordProgress, Guid> { }
 

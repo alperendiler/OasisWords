@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using OasisWords.Application.Services.AuthService;
 using OasisWords.Application.Services.StudentProgressService;
+using OasisWords.Application.Services.UserService;
 using OasisWords.Core.Security.Entities;
 using OasisWords.Core.Security.Hashing;
 using OasisWords.Core.Security.JWT;

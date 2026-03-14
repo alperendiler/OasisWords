@@ -6,7 +6,6 @@ using OasisWords.Core.Application.Pipelines;
 using OasisWords.Core.CrossCuttingConcerns.Exceptions;
 using OasisWords.Domain.Entities;
 using OasisWords.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
 
 namespace OasisWords.Application.Features.StudentProgress.Queries.GetDailyTargetWords;
 

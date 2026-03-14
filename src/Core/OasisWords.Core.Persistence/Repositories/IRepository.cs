@@ -24,8 +24,13 @@ public interface IRepository<TEntity, TId>
         bool enableTracking = true);
 
     TEntity Add(TEntity entity);
+    ICollection<TEntity> AddRange(ICollection<TEntity> entities);
+
     TEntity Update(TEntity entity);
+    ICollection<TEntity> UpdateRange(ICollection<TEntity> entities);
+
     TEntity Delete(TEntity entity);
+    ICollection<TEntity> DeleteRange(ICollection<TEntity> entities);
 }
 
 public interface IAsyncRepository<TEntity, TId>

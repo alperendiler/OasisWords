@@ -1,4 +1,4 @@
-using OasisWords.Application.Services.AuthService;
+using OasisWords.Application.Features.Auth.Constants;
 using OasisWords.Core.CrossCuttingConcerns.Exceptions;
 using OasisWords.Core.Persistence.Repositories;
 using OasisWords.Core.Security.Entities;
@@ -7,42 +7,42 @@ namespace OasisWords.Application.Features.Auth.Rules;
 
 public class AuthBusinessRules
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IAsyncRepository<User, Guid> _userRepository;
 
-    public AuthBusinessRules(IUserRepository userRepository)
+    public AuthBusinessRules(IAsyncRepository<User, Guid> userRepository)
     {
         _userRepository = userRepository;
     }
 
-    public async Task EmailCannotBeDuplicatedWhenRegistered(string email, CancellationToken cancellationToken = default)
+    public async Task EmailCannotBeDuplicatedWhenRegistered(string email, CancellationToken ct = default)
     {
-        bool exists = await _userRepository.AnyAsync(u => u.Email == email, cancellationToken);
+        bool exists = await _userRepository.AnyAsync(u => u.Email == email, ct);
         if (exists)
-            throw new BusinessException("A user with this email address already exists.");
+            throw new BusinessException(AuthMessages.EmailAlreadyExists);
     }
 
     public void UserShouldBeActive(User user)
     {
         if (!user.IsActive)
-            throw new BusinessException("This account has been deactivated.");
+            throw new BusinessException(AuthMessages.AccountDeactivated);
     }
 
     public void UserPasswordShouldMatch(User user, byte[] passwordHash)
     {
         if (!user.PasswordHash.SequenceEqual(passwordHash))
-            throw new BusinessException("Email or password is incorrect.");
+            throw new BusinessException(AuthMessages.InvalidCredentials);
     }
 
-    public async Task UserShouldExistWhenRequested(string email, CancellationToken cancellationToken = default)
+    public async Task UserShouldExistWhenRequested(string email, CancellationToken ct = default)
     {
-        bool exists = await _userRepository.AnyAsync(u => u.Email == email, cancellationToken);
+        bool exists = await _userRepository.AnyAsync(u => u.Email == email, ct);
         if (!exists)
-            throw new BusinessException("Email or password is incorrect.");
+            throw new BusinessException(AuthMessages.UserNotFound);
     }
 
     public void RefreshTokenShouldBeActive(RefreshToken refreshToken)
     {
         if (!refreshToken.IsActive)
-            throw new BusinessException("Refresh token is no longer active.");
+            throw new BusinessException(AuthMessages.RefreshTokenInactive);
     }
 }

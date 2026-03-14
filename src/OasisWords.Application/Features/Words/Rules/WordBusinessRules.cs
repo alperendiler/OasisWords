@@ -1,3 +1,4 @@
+using OasisWords.Application.Features.Words.Constants;
 using OasisWords.Application.Services.WordService;
 using OasisWords.Core.CrossCuttingConcerns.Exceptions;
 using OasisWords.Domain.Enums;
@@ -21,45 +22,43 @@ public class WordBusinessRules
     }
 
     public async Task WordCannotBeDuplicatedForSameLanguage(
-        Guid languageId,
-        string text,
-        CancellationToken cancellationToken = default)
+        Guid languageId, string text, CancellationToken ct = default)
     {
         bool exists = await _wordRepository.AnyAsync(
-            w => w.LanguageId == languageId && w.Text.ToLower() == text.ToLower(),
-            cancellationToken);
-
+            w => w.LanguageId == languageId && w.Text.ToLower() == text.ToLower(), ct);
         if (exists)
-            throw new BusinessException($"The word '{text}' already exists for this language.");
+            throw new BusinessException(string.Format(WordMessages.WordAlreadyExists, text));
     }
 
     public async Task WordMeaningCannotBeDuplicatedForSameLevelAndLanguage(
-        Guid wordId,
-        Guid translationLanguageId,
-        CefrLevel cefrLevel,
-        CancellationToken cancellationToken = default)
+        Guid wordId, Guid translationLanguageId, CefrLevel cefrLevel, CancellationToken ct = default)
     {
         bool exists = await _wordMeaningRepository.AnyAsync(
             m => m.WordId == wordId
               && m.TranslationLanguageId == translationLanguageId
-              && m.CefrLevel == cefrLevel,
-            cancellationToken);
-
+              && m.CefrLevel == cefrLevel, ct);
         if (exists)
-            throw new BusinessException("A meaning for this word at this CEFR level and language already exists.");
+            throw new BusinessException(WordMessages.MeaningAlreadyExists);
     }
 
-    public async Task LanguageShouldExist(Guid languageId, CancellationToken cancellationToken = default)
+    public async Task LanguageShouldExist(Guid languageId, CancellationToken ct = default)
     {
-        bool exists = await _languageRepository.AnyAsync(l => l.Id == languageId, cancellationToken);
+        bool exists = await _languageRepository.AnyAsync(l => l.Id == languageId, ct);
         if (!exists)
-            throw new NotFoundException($"Language with id '{languageId}' was not found.");
+            throw new NotFoundException(string.Format(WordMessages.WordNotFound, languageId));
     }
 
-    public async Task WordShouldExist(Guid wordId, CancellationToken cancellationToken = default)
+    public async Task WordShouldExist(Guid wordId, CancellationToken ct = default)
     {
-        bool exists = await _wordRepository.AnyAsync(w => w.Id == wordId, cancellationToken);
+        bool exists = await _wordRepository.AnyAsync(w => w.Id == wordId, ct);
         if (!exists)
-            throw new NotFoundException($"Word with id '{wordId}' was not found.");
+            throw new NotFoundException(string.Format(WordMessages.WordNotFound, wordId));
+    }
+
+    public async Task WordMeaningShouldExist(Guid meaningId, CancellationToken ct = default)
+    {
+        bool exists = await _wordMeaningRepository.AnyAsync(m => m.Id == meaningId, ct);
+        if (!exists)
+            throw new NotFoundException(string.Format(WordMessages.MeaningNotFound, meaningId));
     }
 }

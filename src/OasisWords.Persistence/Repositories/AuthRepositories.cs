@@ -1,4 +1,4 @@
-using OasisWords.Application.Services.AuthService;
+using OasisWords.Application.Services.UserService;
 using OasisWords.Core.Persistence.Repositories;
 using OasisWords.Core.Security.Entities;
 using OasisWords.Persistence.Contexts;

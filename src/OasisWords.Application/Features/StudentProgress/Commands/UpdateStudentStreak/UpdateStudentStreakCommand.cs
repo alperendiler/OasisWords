@@ -1,5 +1,6 @@
 using MediatR;
 using OasisWords.Application.Services.StudentProgressService;
+using OasisWords.Core.CrossCuttingConcerns.Exceptions;
 using OasisWords.Domain.Entities;
 
 namespace OasisWords.Application.Features.StudentProgress.Commands.UpdateStudentStreak;

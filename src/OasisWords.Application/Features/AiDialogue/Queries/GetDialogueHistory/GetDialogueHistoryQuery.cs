@@ -5,7 +5,6 @@ using OasisWords.Core.Application.Requests;
 using OasisWords.Core.Persistence.Paging;
 using OasisWords.Domain.Entities;
 using OasisWords.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
 
 namespace OasisWords.Application.Features.AiDialogue.Queries.GetDialogueHistory;
 

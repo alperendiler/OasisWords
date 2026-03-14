@@ -72,6 +72,16 @@ public class EfRepositoryBase<TEntity, TId, TContext>
         return entity;
     }
 
+    public ICollection<TEntity> AddRange(ICollection<TEntity> entities)
+    {
+        foreach (var entity in entities)
+            entity.CreatedAt = DateTime.UtcNow;
+
+        Context.AddRange(entities);
+        Context.SaveChanges();
+        return entities;
+    }
+
     public TEntity Update(TEntity entity)
     {
         entity.UpdatedAt = DateTime.UtcNow;
@@ -80,12 +90,32 @@ public class EfRepositoryBase<TEntity, TId, TContext>
         return entity;
     }
 
+    public ICollection<TEntity> UpdateRange(ICollection<TEntity> entities)
+    {
+        foreach (var entity in entities)
+            entity.UpdatedAt = DateTime.UtcNow;
+
+        Context.UpdateRange(entities);
+        Context.SaveChanges();
+        return entities;
+    }
+
     public TEntity Delete(TEntity entity)
     {
         entity.DeletedAt = DateTime.UtcNow;
         Context.Update(entity);
         Context.SaveChanges();
         return entity;
+    }
+
+    public ICollection<TEntity> DeleteRange(ICollection<TEntity> entities)
+    {
+        foreach (var entity in entities)
+            entity.DeletedAt = DateTime.UtcNow;
+
+        Context.UpdateRange(entities);
+        Context.SaveChanges();
+        return entities;
     }
 
     // ── Async ─────────────────────────────────────────────────────────────
@@ -154,12 +184,29 @@ public class EfRepositoryBase<TEntity, TId, TContext>
         return await query.ToPaginateAsync(index, size, cancellationToken: cancellationToken);
     }
 
+    public async Task<bool> AnyAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        CancellationToken cancellationToken = default)
+    {
+        return await Context.Set<TEntity>().AnyAsync(predicate, cancellationToken);
+    }
+
     public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         entity.CreatedAt = DateTime.UtcNow;
         await Context.AddAsync(entity, cancellationToken);
         await Context.SaveChangesAsync(cancellationToken);
         return entity;
+    }
+
+    public async Task<ICollection<TEntity>> AddRangeAsync(ICollection<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        foreach (var entity in entities)
+            entity.CreatedAt = DateTime.UtcNow;
+
+        await Context.AddRangeAsync(entities, cancellationToken);
+        await Context.SaveChangesAsync(cancellationToken);
+        return entities;
     }
 
     public async Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
@@ -170,6 +217,16 @@ public class EfRepositoryBase<TEntity, TId, TContext>
         return entity;
     }
 
+    public async Task<ICollection<TEntity>> UpdateRangeAsync(ICollection<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        foreach (var entity in entities)
+            entity.UpdatedAt = DateTime.UtcNow;
+
+        Context.UpdateRange(entities);
+        await Context.SaveChangesAsync(cancellationToken);
+        return entities;
+    }
+
     public async Task<TEntity> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         entity.DeletedAt = DateTime.UtcNow;
@@ -178,10 +235,13 @@ public class EfRepositoryBase<TEntity, TId, TContext>
         return entity;
     }
 
-    public async Task<bool> AnyAsync(
-        Expression<Func<TEntity, bool>> predicate,
-        CancellationToken cancellationToken = default)
+    public async Task<ICollection<TEntity>> DeleteRangeAsync(ICollection<TEntity> entities, CancellationToken cancellationToken = default)
     {
-        return await Context.Set<TEntity>().AnyAsync(predicate, cancellationToken);
+        foreach (var entity in entities)
+            entity.DeletedAt = DateTime.UtcNow;
+
+        Context.UpdateRange(entities);
+        await Context.SaveChangesAsync(cancellationToken);
+        return entities;
     }
 }

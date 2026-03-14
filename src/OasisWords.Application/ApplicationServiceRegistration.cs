@@ -1,7 +1,6 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using OasisWords.Application.Features.Auth;
 using OasisWords.Application.Features.Auth.Rules;
 using OasisWords.Application.Features.Words.Rules;
 using OasisWords.Application.Services.AuthService;

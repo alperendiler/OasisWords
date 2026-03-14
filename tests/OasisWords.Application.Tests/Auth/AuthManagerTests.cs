@@ -6,6 +6,7 @@ using OasisWords.Application.Features.Auth.Commands.Login;
 using OasisWords.Application.Features.Auth.Commands.Register;
 using OasisWords.Application.Features.Auth.Rules;
 using OasisWords.Application.Services.AuthService;
+using OasisWords.Application.Services.UserService;
 using OasisWords.Core.CrossCuttingConcerns.Exceptions;
 using OasisWords.Core.Persistence.Paging;
 using OasisWords.Core.Security.Entities;

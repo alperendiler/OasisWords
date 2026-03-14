@@ -1,7 +1,7 @@
 using OasisWords.Core.Persistence.Repositories;
 using OasisWords.Core.Security.Entities;
 
-namespace OasisWords.Application.Services.AuthService;
+namespace OasisWords.Application.Services.UserService;
 
 public interface IUserRepository : IAsyncRepository<User, Guid>, IRepository<User, Guid> { }
 
